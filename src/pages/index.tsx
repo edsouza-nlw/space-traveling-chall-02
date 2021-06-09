@@ -104,30 +104,29 @@ export default function Home({ postsPagination }: HomeProps): JSX.Element {
   );
 }
 
-export const getStaticProps: GetStaticProps = async () => {
+export const getStaticProps: GetStaticProps = async ({
+  preview = false,
+  previewData,
+}) => {
   const prismic = getPrismicClient();
-  const response = await prismic.query(
+  const postsResponse = await prismic.query(
     [Prismic.predicates.at('document.type', 'posts')],
     {
-      fetch: ['posts.title', 'posts.subtitle', 'posts.author'],
-      pageSize: 3,
+      pageSize: 2, // posts per page
+      ref: previewData?.ref ?? null,
     }
   );
 
-  const posts = response.results.map(post => {
-    return {
-      uid: post.uid,
-      first_publication_date: post.first_publication_date,
-      data: post.data,
-    };
-  });
-
   const postsPagination = {
-    next_page: response.next_page,
-    results: posts,
+    next_page: postsResponse.next_page,
+    results: postsResponse.results,
   };
 
   return {
-    props: { postsPagination },
+    props: {
+      postsPagination,
+      preview,
+    },
+    revalidate: 60 * 5, // 5 minutes
   };
 };
